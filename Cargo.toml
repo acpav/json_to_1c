@@ -1,0 +1,4 @@
+[workspace]
+
+members = ["json_to_1c_exe", "json_to_1c_lib"]
+resolver = "2"

@@ -1,0 +1,8 @@
+[package]
+name = "json_to_1c_exe"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4.5.13"
+json_to_1c_lib = { path = "../json_to_1c_lib"}
