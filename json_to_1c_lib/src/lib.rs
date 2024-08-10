@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use chrono::{NaiveDateTime, DateTime};
+use chrono::{DateTime, NaiveDate, NaiveDateTime};
 
 use serde_json::Value;
 
@@ -145,9 +145,7 @@ impl ParseJson1c {
                 if is_uid(s) {
                     return format!(" // ЮТест.Данные().СлучайныйИдентификатор()");
                 }
-                else if NaiveDateTime::from_str(s).is_ok()
-                    || DateTime::parse_from_rfc2822(s).is_ok()
-                    || DateTime::parse_from_rfc3339(s).is_ok()
+                else if is_date(s)
                 {
                     return format!(" // ЮТест.Данные().СлучайнаяДатаВПрошлом(-10, \"дней\")");
                 }
@@ -171,7 +169,14 @@ impl ParseJson1c {
         match val {
             Value::String(s)=>
             {
-                return format!("\"{}\"", s.replace("\"", "\"\"").replace('\n', "\n|"));
+                if is_date(s)
+                {
+                    return format!("xmlЗначение(Тип(\"Дата\"), \"{s}\")");
+                }
+                else
+                {
+                    return format!("\"{}\"", s.replace("\"", "\"\"").replace('\n', "\n|"));
+                }
             }
     
             Value::Null =>
@@ -228,6 +233,13 @@ pub fn is_uid(value: &String) -> bool
     }
 }
 
+pub fn is_date(value: &String) -> bool
+{
+    NaiveDateTime::from_str(value).is_ok()
+    || NaiveDate::parse_from_str(value, "%F").is_ok()
+    || DateTime::parse_from_rfc3339(value).is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -254,6 +266,11 @@ mod tests {
         assert_eq!(parcer.to_random(&Value::from(-10)), " // ЮТест.Данные().СлучайноеОтрицательноеЧисло(2)", "Число -10");
         assert_eq!(parcer.to_random(&Value::from(107.47)), " // ЮТест.Данные().СлучайноеПоложительноеЧисло(3, 2)", "Число 107.47");
         assert_eq!(parcer.to_random(&Value::from(-107.47)), " // ЮТест.Данные().СлучайноеОтрицательноеЧисло(3, 2)", "Число -107.47");
+
+        assert!(!is_date(&"1234".to_string()), "1234 не дата");
+        assert!(is_date(&"2024-03-25T01:00:00".to_string()), "2024-03-25T01:00:00 это дата");
+        assert!(is_date(&"2024-03-26T20:28:50.433676172+03:00".to_string()), "2024-03-26T20:28:50.433676172+03:00 это дата");
+        assert!(is_date(&"2024-03-25".to_string()), "2024-03-25 это дата");
 
     }
 }
